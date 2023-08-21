@@ -102,11 +102,11 @@ initController(controllers);
 /*----------------------------------------------------------
  * 5) 설정한 내용을 기반으로 서버 구동 시작
  *----------------------------------------------------------*/
-const privateKey = fs.readFileSync(process.env.SSL_PRIVATE_KEY_PATH);
-const certificate = fs.readFileSync(process.env.SSL_CERT_KEY_PATH);
+const keyFile = fs.readFileSync(process.env.SSL_KEY_PATH);
+const certFile = fs.readFileSync(process.env.SSL_CERT_PATH);
 const options = {
-    key: privateKey,
-    cert: certificate
+    key: keyFile,
+    cert: certFile
 };
 
 const httpsServer = https.createServer(options, app);
@@ -115,7 +115,7 @@ httpsServer.listen(process.env.PORT, function () {
 });
 
 process.on("exit", function () {
-    logger.debug("Server is shutdown");
+    console.log("Server is shutdown");
 });
 
 process.on("SIGINT", () => {

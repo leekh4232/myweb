@@ -19,7 +19,7 @@ class BaseController {
     }
 
     addRoute(method, url, cb) {
-        this.#router[method](url, cb);
+        this.#router[method.toLowerCase()](url, cb);
     }
 }
 

@@ -3,7 +3,7 @@ const BaseController = require("../helpers/BaseController");
 class Sample extends BaseController {
     constructor(app) {
         super(app);
-        this.addRoute("get", "/", this.index);
+        this.addRoute("get", "/sample/hello_world", this.index);
     }
 
     index(req, res) {
