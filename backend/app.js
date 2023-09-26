@@ -23,6 +23,7 @@ const expressSession = require("express-session");
 const fileUpload = require("express-fileupload");
 const cors = require("cors");
 const fsFileTree = require("fs-file-tree");
+const { FileUploadException } = require("./helpers/ExceptionHelper");
 
 /*-----------------------------------------------------------
  * 2) Express 객체 생성 및 Helper 로드
@@ -49,11 +50,17 @@ app.use("/", serveStatic(process.env.PUBLIC_PATH));
 
 app.use(
     fileUpload({
-        limits: { fileSize: process.env.UPLOAD_FILE_SIZE_LIMIT },
+        limits: { fileSize: eval(process.env.UPLOAD_FILE_SIZE_LIMIT) },
         useTempFiles: true,
         tempFileDir: process.env.UPLOAD_TEMP_DIR,
         createParentPath: true,
-        debug: false,
+        debug: process.env.UPLOAD_DEBUG,
+        abortOnLimit: true,
+        uploadTimeout: 0,
+        limitHandler: function (req, res, next) {
+            const err = new FileUploadException(`파일 크기가 너무 큽니다. (최대 ${eval(process.env.UPLOAD_FILE_SIZE_LIMIT)}MB)`);
+            next(err);
+        }
     })
 );
 
@@ -102,17 +109,25 @@ initController(controllers);
 /*----------------------------------------------------------
  * 5) 설정한 내용을 기반으로 서버 구동 시작
  *----------------------------------------------------------*/
-const keyFile = fs.readFileSync(process.env.SSL_KEY_PATH);
-const certFile = fs.readFileSync(process.env.SSL_CERT_PATH);
-const options = {
-    key: keyFile,
-    cert: certFile
-};
-
-const httpsServer = https.createServer(options, app);
-httpsServer.listen(process.env.PORT, function () {
-    console.log("HTTPS server listening on port " + process.env.PORT);
+// HTTP 서버 구동
+app.listen(process.env.HTTP_PORT, function () {
+    console.log(`HTTP server listening on port ${process.env.HTTP_PORT}`);
 });
+
+// HTTPS 서버 구동
+if (process.env.USE_HTTPS === "true") {
+    const keyFile = fs.readFileSync(process.env.SSL_KEY_PATH);
+    const certFile = fs.readFileSync(process.env.SSL_CERT_PATH);
+    const options = {
+        key: keyFile,
+        cert: certFile
+    };
+
+    const httpsServer = https.createServer(options, app);
+    httpsServer.listen(process.env.HTTPS_PORT, function () {
+        console.log(`HTTPS server listening on port ${process.env.HTTPS_PORT}`);
+    });
+}
 
 process.on("exit", function () {
     console.log("Server is shutdown");
